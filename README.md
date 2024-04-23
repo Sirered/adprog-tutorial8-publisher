@@ -24,3 +24,9 @@ Afterwards when we do cargo run on the publisher, it will call the main function
 When the RabbitMQ server receives these messages, it will check the event type of the messages it receives. Since the subscriber that is connected to the server is listening for "user_created" events, the messages sent by the publisher (which are all of the "user_created" event type) will be sent and handled by the subscriber. 
 
 When thesubscriber gets the messages, it will call the handle function of the handler set to the listener (which is of type UserCreatedHandler). This handle function will take the message payload (which should contain id and name) and will print out "In Galih’s Computer [2206046696]. Message received:" + the UserCreatedMessage sent by the publisher in the payload.
+
+## Monitoring chart based on publisher.
+
+![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/7f51ca91-42a3-43a1-be87-396bfbfed3a6)
+
+We get spikes in 'Consumer Ack's each time we run publisher. This is because when we run publisher, the publisher will send 5 messages to the RabbitMQ server. Since the messages are of "user_created" type, it will be sent to subscriber in which the subscriber will process the events. When it has finished processing the event, it will send Consumer Acks acknowledging that he has received and successfully processed the messages to the RabbitMQ server. In summary, publisher sends 5 messages to the RabbitMQ server when run, which is forwarded to the subscriber, who will process and Ack the message, which would mean that the RabbitMQ server would get a spike of consumer Acks because of such.
