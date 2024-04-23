@@ -10,4 +10,4 @@ In the publisher code, the above URI is the URI set for the publisher new_publis
 
 ## Running RabbitMQ as message broker.
 
-![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/fa4c8240-afd1-4809-ade0-da613cd2f038)
+![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/c96c06a0-b470-4578-bbbc-daa752bc4814)
