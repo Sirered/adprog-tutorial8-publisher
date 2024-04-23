@@ -30,28 +30,3 @@ When thesubscriber gets the messages, it will call the handle function of the ha
 ![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/7f51ca91-42a3-43a1-be87-396bfbfed3a6)
 
 We get spikes in 'Consumer Ack's each time we run publisher. This is because when we run publisher, the publisher will send 5 messages to the RabbitMQ server. Since the messages are of "user_created" type, it will be sent to subscriber in which the subscriber will process the events. When it has finished processing the event, it will send Consumer Acks acknowledging that he has received and successfully processed the messages to the RabbitMQ server. In summary, publisher sends 5 messages to the RabbitMQ server when run, which is forwarded to the subscriber, who will process and Ack the message, which would mean that the RabbitMQ server would get a spike of consumer Acks because of such.
-
-## Simulation slow subscriber
-
-**I had run the publisher 5 times. The first screenshot is to show the Total amount of messages in queue that was recorded after I run the publishers(with 21 Total messages) and the second screenshot is to show the shape of the queue graph, after the entire queue was processed**
-
-![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/e5098060-5327-4fc6-a7e0-856aa070681f)
-![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/6932a062-ee55-49e5-bbba-b95553dfa26b)
-
-**Why did it show 21 total messages were in queue at a time**
-
-When we run the publisher 5 times in quick succession, we would be sending a total of 25 messages at once. Since it takes a second for our application to process each, most of those messages will have to be enqueued into the message queue before they can be sent to the subscriber (otherwise they would not be processed and just be dropped). Thus a lot of them would have to wait for their turn in the queue, while subscriber handles the messages that came before them, thus leading to the spike of messages we saw in the message queue grah. As to why it states 21 specifically, despite the fact that there should be 25 messages is probably because in the time that it took for the RabbitMQ Server UI to update (which it does so quite slowly), the subscriber had handled 3 of the messages and is on their fourth, thus leaving only 21 messages unprocessed and in queue. After peaking at 21, the total amount of messages went to 16 then 11 then 5 then 0 (I am not 100% sure that the number after 11 was 5, I just remember it was either 4, 5 or 6), further proving that the RabbitMQ UI doesn't update in real time, and in the time between updates more than 1 message could be distributed to subscriber and processed. 
-
-## Reflection and Running at least three subscribers
-
-**I had run the publisher 5 times in this run as well. The first screenshot is to show what the subscribers looked like while they were processing the messages, the second screenshot is what they look like after they were done and 3rd screenshot is to show the RabbitMQ message queue graph after completion**
-
-![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/a4e1940e-061f-468b-9d6c-92cc01a7bd52)
-![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/4c07dc60-3f53-4b27-bdab-c2fbcb2929bf)
-![image](https://github.com/Sirered/adprog-tutorial8-publisher/assets/126568984/67f56934-73bf-4366-839f-0b74238da831)
-
-The reason as to why the message queue graph decreases a lot more steeply when running 3 subscribers as opposed to running only one, is because of the fact that RabbitMQ can divide the messages evenly among the 3 subscribers. This is because all 3 subscribers would be listening to the same server and listening for the same topic("user_created") thus they would all be connected to the same queue. This means that when at least one of them becomes free and gives a consumer Ack, while there are messages in the queue, RabbitMQ will instantly give that subscriber the next message in lin. Since 3 subscribers are working at the same time, this means that work is shared among the subscribers thus theoretically dividing the time needed into 3, which makes handling all 25 messages faster, making the message queue grah a lot steeper.
-
-To improve on the code (other tha just recommenting the code that makes the subscriber sleep for a second on every message) is to make each subscriber instance implement multi-threading. This would have a similar effect to spawning multiple instances of subscriber at a time, but it would not require you to open multiple consoles to run the separate subscriber instances. Plus it would work well even if you were to spawn multiple subscribers, because if we had 3 subscribers, each with a threadpool of 3 threads, that would mean that there could be 9 threads working on processing the message at the same time, which would be a lot faster than just 1 thread per subscriber instance. 
-
-Other than performance, we may consider security. For example username and password of guest isn't the most secure combination out there. Also, if this was a public repository, we would make the URI a secret, so instead of a hard-coded RabbitMQ URI (which does contain the username and password for authentication) since it may allow outsiders to listen on our message queues, when they shouldn't. Furthermore, there is no error-handling within this code, thus we don't have anyway to handle failures other than the application going down/crashing.
